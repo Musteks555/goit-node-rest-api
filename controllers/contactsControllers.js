@@ -65,7 +65,7 @@ export const updateContact = (req, res) => {
     const { id } = req.params;
 
     if (!Object.keys(req.body).length) {
-        return res.status(400).json({ message: "Body must have at least one field" });
+        return res.status(404).json({ message: "Body must have at least one field" });
     }
 
     const contact = {
