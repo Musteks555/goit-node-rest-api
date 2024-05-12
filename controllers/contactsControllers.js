@@ -13,8 +13,14 @@ export const getOneContact = (req, res) => {
 
     contactsService
         .getContactById(id)
-        .then((contact) => res.status(200).json(contact))
-        .catch((err) => res.status(404).json({ message: "Not found" }));
+        .then((contact) => {
+            if (contact) {
+                res.status(200).json(contact);
+            } else {
+                res.status(404).json({ message: "Not found" });
+            }
+        })
+        .catch((err) => res.status(500).json({ message: err.message }));
 };
 
 export const deleteContact = (req, res) => {
@@ -22,8 +28,14 @@ export const deleteContact = (req, res) => {
 
     contactsService
         .removeContact(id)
-        .then((contact) => res.status(200).json(contact))
-        .catch((err) => res.status(404).json({ message: "Not found" }));
+        .then((contact) => {
+            if (contact) {
+                res.status(200).json(contact);
+            } else {
+                res.status(404).json({ message: "Not found" });
+            }
+        })
+        .catch((err) => res.status(500).json({ message: err.message }));
 };
 
 export const createContact = (req, res) => {
@@ -36,7 +48,7 @@ export const createContact = (req, res) => {
     const { error, value } = createContactSchema.validate(contact, { abortEarly: false });
 
     if (typeof error !== "undefined") {
-        return res.status(400).send(error.details.map((error) => error.message).join(", "));
+        return res.status(400).json({ message: error.message });
     }
 
     contactsService
@@ -46,11 +58,15 @@ export const createContact = (req, res) => {
             phone: value.phone,
         })
         .then((contact) => res.status(201).json(contact))
-        .catch((err) => res.status(400).json({ message: err.message }));
+        .catch((err) => res.status(500).json({ message: err.message }));
 };
 
 export const updateContact = (req, res) => {
     const { id } = req.params;
+
+    if (!Object.keys(req.body).length) {
+        return res.status(400).json({ message: "Body must have at least one field" });
+    }
 
     const contact = {
         name: req.body.name,
@@ -61,7 +77,7 @@ export const updateContact = (req, res) => {
     const { error, value } = updateContactSchema.validate(contact, { abortEarly: false });
 
     if (typeof error !== "undefined") {
-        return res.status(400).send(error.details.map((error) => error.message).join(", "));
+        return res.status(400).json({ message: error.message });
     }
 
     const updatedContact = {};
@@ -74,6 +90,12 @@ export const updateContact = (req, res) => {
 
     contactsService
         .updateContact(id, updatedContact)
-        .then((contact) => res.status(201).json(contact))
-        .catch((err) => res.status(404).json({ message: "Not found" }));
+        .then((contact) => {
+            if (contact) {
+                res.status(201).json(contact);
+            } else {
+                res.status(404).json({ message: "Not found" });
+            }
+        })
+        .catch((err) => res.status(500).json({ message: err.message }));
 };
