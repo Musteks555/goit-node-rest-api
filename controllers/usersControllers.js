@@ -65,6 +65,7 @@ export async function login(req, res, next) {
         const data = await User.findByIdAndUpdate(user._id, { token }, { new: true });
 
         res.status(201).send({
+            token,
             user: {
                 email: data.email,
                 subscription: data.subscription,
@@ -91,10 +92,8 @@ export async function current(req, res, next) {
         const user = await User.findOne({ _id: id });
 
         res.status(200).send({
-            user: {
-                email: user.email,
-                subscription: user.subscription,
-            },
+            email: user.email,
+            subscription: user.subscription,
         });
     } catch (error) {
         next(error);

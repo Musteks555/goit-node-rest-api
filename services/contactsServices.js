@@ -1,14 +1,14 @@
 import Contact from "../models/contact.js";
 
-async function listContacts() {
-    const data = await Contact.find();
+async function listContacts(userId) {
+    const data = await Contact.find({ owner: userId });
 
     return data;
 }
 
-async function getContactById(contactId) {
+async function getContactById(contactId, userId) {
     try {
-        const contact = await Contact.findById(contactId);
+        const contact = await Contact.findOne({ _id: contactId, owner: userId });
 
         if (!contact) {
             return null;
@@ -20,9 +20,9 @@ async function getContactById(contactId) {
     }
 }
 
-async function removeContact(contactId) {
+async function removeContact(contactId, userId) {
     try {
-        const removedContact = await Contact.findByIdAndDelete(contactId);
+        const removedContact = await Contact.findOneAndDelete({ _id: contactId, owner: userId });
 
         if (!removedContact) {
             return null;
@@ -34,15 +34,15 @@ async function removeContact(contactId) {
     }
 }
 
-async function addContact({ name, email, phone, favorite }) {
-    const newContact = await Contact.create({ name, email, phone, favorite });
+async function addContact({ name, email, phone, favorite, owner }) {
+    const newContact = await Contact.create({ name, email, phone, favorite, owner });
 
     return newContact;
 }
 
-async function updateContact(contactId, contact) {
+async function updateContact(contactId, userId, contact) {
     try {
-        const updatedContact = await Contact.findByIdAndUpdate(contactId, contact, { new: true });
+        const updatedContact = await Contact.findOneAndUpdate({ _id: contactId, owner: userId }, contact, { new: true });
 
         return updatedContact;
     } catch (error) {
@@ -52,7 +52,7 @@ async function updateContact(contactId, contact) {
 
 async function updateStatusContact(contactId, body) {
     try {
-        const updatedContact = await Contact.findByIdAndUpdate(contactId, body, { new: true });
+        const updatedContact = await Contact.findOneAndUpdate(contactId, body, { new: true });
 
         return updatedContact;
     } catch (error) {
