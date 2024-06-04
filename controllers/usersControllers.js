@@ -1,5 +1,9 @@
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
+import gravatar from "gravatar";
+import path from "node:path";
+import * as fs from "node:fs/promises";
+import Jimp from "jimp";
 
 import User from "../models/users.js";
 import { registerUserSchema } from "../schemas/usersSchemas.js";
@@ -26,7 +30,9 @@ export async function register(req, res, next) {
 
         const passwordHash = await bcrypt.hash(value.password, 10);
 
-        const data = await User.create({ email: value.email, password: passwordHash, subscription: value.subscription });
+        const avatarURL = gravatar.url(value.email);
+
+        const data = await User.create({ email: value.email, password: passwordHash, subscription: value.subscription, avatarURL });
 
         res.status(201).send({
             user: {
@@ -65,6 +71,7 @@ export async function login(req, res, next) {
         const data = await User.findByIdAndUpdate(user._id, { token }, { new: true });
 
         res.status(201).send({
+            token,
             user: {
                 email: data.email,
                 subscription: data.subscription,
@@ -91,11 +98,26 @@ export async function current(req, res, next) {
         const user = await User.findOne({ _id: id });
 
         res.status(200).send({
-            user: {
-                email: user.email,
-                subscription: user.subscription,
-            },
+            email: user.email,
+            subscription: user.subscription,
         });
+    } catch (error) {
+        next(error);
+    }
+}
+
+export async function changeAvatar(req, res, next) {
+    try {
+        const newPath = path.resolve("public", "avatars", req.file.filename);
+
+        await fs.rename(req.file.path, newPath);
+
+        const image = await Jimp.read(newPath);
+        await image.resize(250, 250).quality(60).writeAsync(newPath);
+
+        const user = await User.findByIdAndUpdate(req.user.id, { avatarURL: `/avatars/${req.file.filename}` }, { new: true });
+
+        res.send({ avatarURL: user.avatarURL });
     } catch (error) {
         next(error);
     }
