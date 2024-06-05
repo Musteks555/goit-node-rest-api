@@ -108,6 +108,10 @@ export async function current(req, res, next) {
 
 export async function changeAvatar(req, res, next) {
     try {
+        if (!req.file) {
+            return res.status(400).json({ message: "No file uploaded" });
+        }
+
         const newPath = path.resolve("public", "avatars", req.file.filename);
 
         await fs.rename(req.file.path, newPath);
@@ -115,7 +119,9 @@ export async function changeAvatar(req, res, next) {
         const image = await Jimp.read(newPath);
         await image.resize(250, 250).quality(60).writeAsync(newPath);
 
-        const user = await User.findByIdAndUpdate(req.user.id, { avatarURL: `/avatars/${req.file.filename}` }, { new: true });
+        const avatarPath = path.posix.join("/avatars", req.file.filename);
+
+        const user = await User.findByIdAndUpdate(req.user.id, { avatarURL: avatarPath }, { new: true });
 
         res.send({ avatarURL: user.avatarURL });
     } catch (error) {
